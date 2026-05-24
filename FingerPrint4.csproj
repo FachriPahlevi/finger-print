@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{BFC92827-ED85-4F90-9EEA-CA1AB8DF7A6A}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>WinExe</OutputType>
     <RootNamespace>FingerPrint4</RootNamespace>
     <AssemblyName>FingerPrint4</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
@@ -48,9 +48,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants\AppMessages.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Infrastructure\Database\DbConnectionFactory.cs" />
     <Compile Include="Repositories\UserRepository.cs" />
     <Compile Include="Security\PasswordProtector.cs" />
+    <Compile Include="Forms\MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\FormDashboard.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -131,6 +135,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Infrastructure\Database\InitializeFingerprintDb.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\Debug\fingerprint.png" />

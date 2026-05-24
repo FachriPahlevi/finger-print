@@ -12,6 +12,13 @@ namespace FingerPrint4
 
         public static string GetConnectionString()
         {
+            string environmentConnectionString = System.Environment.GetEnvironmentVariable("FINGERPRINT_DB_CONNECTION_STRING");
+
+            if (!string.IsNullOrWhiteSpace(environmentConnectionString))
+            {
+                return environmentConnectionString;
+            }
+
             ConnectionStringSettings connectionString = ConfigurationManager.ConnectionStrings["FingerprintDb"];
 
             if (connectionString == null || string.IsNullOrWhiteSpace(connectionString.ConnectionString))

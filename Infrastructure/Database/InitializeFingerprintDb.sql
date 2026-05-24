@@ -1,0 +1,21 @@
+IF DB_ID(N'FingerPrintDB') IS NULL
+BEGIN
+    CREATE DATABASE FingerPrintDB;
+END;
+GO
+
+USE FingerPrintDB;
+GO
+
+IF OBJECT_ID(N'dbo.Users', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Users
+    (
+        Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        Name NVARCHAR(100) NOT NULL UNIQUE,
+        Password NVARCHAR(MAX) NOT NULL,
+        FingerPrint NVARCHAR(MAX) NULL,
+        CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Users_CreatedAt DEFAULT SYSUTCDATETIME()
+    );
+END;
+GO
