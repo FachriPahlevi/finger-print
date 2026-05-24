@@ -1,31 +1,24 @@
 ﻿using DPUruNet;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Data.SqlClient;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml.Linq;
 
 namespace FingerPrint4
 {
     public partial class FormRegister : Form
     {
-        private String connectionString;
         private ReaderCollection readers;
         private Reader currentReader;
         private CaptureResult captureResult;
+        private readonly UserRepository userRepository;
 
         bool showPassword;
         public FormRegister()
         {
             InitializeComponent();
 
+            userRepository = new UserRepository();
             showPassword = false;
             setUI();
         }
@@ -105,7 +98,6 @@ namespace FingerPrint4
         private void FormRegister_Load(object sender, EventArgs e)
         {
             this.InitReader();
-            this.connectionString = DatabaseConnection.connectionString;
         }
         
         private void InitReader()
@@ -125,7 +117,7 @@ namespace FingerPrint4
                 {
                     btnRegister1.BackColor = Color.Silver;
                     btnRegister1.Enabled= false;
-                    MessageBox.Show("Fingerprint not detected", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(AppMessages.FingerprintNotDetected, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     this.readers = readers;
                 }
             }
@@ -137,17 +129,13 @@ namespace FingerPrint4
 
         private void btnRegister1_Click(object sender, EventArgs e)
         {
-            string Name = txtUsername1.Text;
-            string Password = txtPassword.Text;
-            FormFingerPrintRegister formFingerPrintRegister =
-                new FormFingerPrintRegister(connectionString, readers, currentReader, captureResult, new UserFingerPrint(Name, Password),this);
             string name = txtUsername1.Text.Trim();
             string password = txtPassword.Text.Trim();
 
             if (string.IsNullOrEmpty(name))
             {
                 MessageBox.Show(
-                    "You must insert name",
+                    AppMessages.UserNameRequired,
                     "Information",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
@@ -158,7 +146,7 @@ namespace FingerPrint4
             if (string.IsNullOrEmpty(password))
             {
                 MessageBox.Show(
-                    "You must insert password",
+                    AppMessages.PasswordRequired,
                     "Information",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
@@ -168,53 +156,24 @@ namespace FingerPrint4
 
             try
             {
-                // =========================
-                // CHECK USER EXISTS
-                // =========================
-
-                bool userExist = false;
-
-                using (SqlConnection con =
-                    new SqlConnection(connectionString))
+                if (userRepository.ExistsByName(name))
                 {
-                    con.Open();
+                    MessageBox.Show(
+                        AppMessages.UserAlreadyExists,
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
 
-                    string checkSql =
-                        "SELECT * FROM Users WHERE Name=@Name";
-
-                    SqlCommand checkCmd =
-                        new SqlCommand(checkSql, con);
-
-                    checkCmd.Parameters.AddWithValue(
-                        "@Name",
-                        name
-                    );
-
-                    SqlDataReader reader =
-                        checkCmd.ExecuteReader();
-
-                    if (reader.Read())
-                    {
-                        userExist = true;
-                    }
-
-                    reader.Close();
-
-                    if (userExist)
-                    {
-                        MessageBox.Show(
-                            "User already exists",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-
-                        return;
-                    }
+                    return;
                 }
             } catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
+                return;
             }
+
+            FormFingerPrintRegister formFingerPrintRegister =
+                new FormFingerPrintRegister(readers, currentReader, captureResult, new UserFingerprint(name, password), this);
             
             this.Hide();
             formFingerPrintRegister.ShowDialog();

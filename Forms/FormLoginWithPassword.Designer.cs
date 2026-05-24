@@ -194,7 +194,6 @@ namespace FingerPrint4
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Login with Password";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormLoginWithPassword_FormClosing);
-            this.Load += new System.EventHandler(this.FormLoginWithPassword_Load);
             this.cardPanel1.ResumeLayout(false);
             this.cardPanel1.PerformLayout();
             this.panelTBPassword.ResumeLayout(false);

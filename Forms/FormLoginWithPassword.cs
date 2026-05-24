@@ -1,31 +1,30 @@
-﻿using DPUruNet;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace FingerPrint4
 {
-    public partial class FormLogin : Form
+    public partial class FormLoginWithPassword : Form
     {
-        private String connectionString;
-        private ReaderCollection readers;
-        private Reader currentReader;
-        private CaptureResult captureResult;
+        private bool showPassword;
+        private Form parent;
+        private readonly UserRepository userRepository;
 
-        bool showPassword;
-        public FormLogin()
+        public FormLoginWithPassword(Form parent, UserFingerprint user = null)
         {
             InitializeComponent();
 
+            userRepository = new UserRepository();
             showPassword = false;
             setUI();
+            this.parent = parent;
+
+            if (user != null)
+            {
+                txtUsername1.Text = user.Name;
+                txtPassword.Text = PasswordProtector.Decrypt(user.Password);
+            }
         }
 
         private void setUI()
@@ -82,8 +81,8 @@ namespace FingerPrint4
             panelTBPassword.Region = new Region(path4);
 
             // Icon Button
-            Image resized = new Bitmap(global::FingerPrint4.Properties.Resources.fingerprint_04, new Size(45, 35));
-            btnLogin1.Image = resized;
+            //Image resized = new Bitmap(global::FingerPrint4.Properties.Resources.fingerprint_04, new Size(45, 35));
+            //btnLogin1.Image = resized;
 
             Image resized2 = new Bitmap(global::FingerPrint4.Properties.Resources.eye_icon, new Size(25, 15));
             btnShowPassword.Image = resized2;
@@ -91,8 +90,32 @@ namespace FingerPrint4
 
         private void BtnLogin1_Click(object sender, EventArgs e)
         {
-            this.Hide();
-            new FormFingerPrintLogin(connectionString, readers, currentReader, captureResult, this).ShowDialog();
+            string name = txtUsername1.Text.Trim();
+            string password = txtPassword.Text;
+
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(password))
+            {
+                MessageBox.Show(AppMessages.LoginFailed, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                if (userRepository.IsValidCredential(name, password))
+                {
+                    FormDashboard frm = new FormDashboard();
+
+                    this.Hide();
+                    frm.ShowDialog();
+                    return;
+                }
+
+                MessageBox.Show(AppMessages.LoginFailed, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnShowPassword_Click(object sender, EventArgs e)
@@ -106,35 +129,10 @@ namespace FingerPrint4
             txtPassword.UseSystemPasswordChar = (!showPassword);
         }
 
-        private void FormLogin_Load(object sender, EventArgs e)
+        private void FormLoginWithPassword_FormClosing(object sender, FormClosingEventArgs e)
         {
-            InitReader();
-            this.connectionString = DatabaseConnection.connectionString;
+            if (parent!=null) parent.Close();
         }
 
-        private void InitReader()
-        {
-            try
-            {
-                ReaderCollection readers = ReaderCollection.GetReaders();
-
-                if (readers.Count > 0)
-                {
-                    currentReader = readers[0];
-                    this.readers = readers;
-                }
-                else
-                {
-                    MessageBox.Show("Fingerprint not detected", "Information",MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    this.Hide();
-                    new FormLoginWithPassword(this).ShowDialog();
-                    this.readers = readers;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
-        }
     }
 }

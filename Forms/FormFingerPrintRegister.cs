@@ -1,38 +1,31 @@
 ﻿using DPUruNet;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Data.SqlClient;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml.Linq;
 
 namespace FingerPrint4
 {
     public partial class FormFingerPrintRegister : Form
     {
-        private String connectionString;
         private ReaderCollection readers;
         private Reader currentReader;
         private CaptureResult captureResult;
-        private UserFingerPrint user;
+        private UserFingerprint user;
         private Form parent;
+        private readonly UserRepository userRepository;
         
         public FormFingerPrintRegister()
         {
             InitializeComponent();
+            userRepository = new UserRepository();
         }
 
-        public FormFingerPrintRegister(String connectionString, ReaderCollection readers, Reader currentReader, CaptureResult captureResult, UserFingerPrint user, Form parent)
+        public FormFingerPrintRegister(ReaderCollection readers, Reader currentReader, CaptureResult captureResult, UserFingerprint user, Form parent)
         {
             InitializeComponent();
-            this.connectionString = connectionString;
+            userRepository = new UserRepository();
             this.readers = readers;
             this.currentReader = currentReader;
             this.captureResult = captureResult;
@@ -121,10 +114,11 @@ namespace FingerPrint4
                     //pictureFingerprint.Visible = true;
                     pictureFingerprint.Image = bitmap;
 
-                    InsertToDatabase();
-
-                    this.parent.Close();
-                    this.Hide();
+                    if (InsertToDatabase())
+                    {
+                        parent?.Close();
+                        Hide();
+                    }
                 }
                 else
                 {
@@ -209,11 +203,8 @@ namespace FingerPrint4
             CloseReader();
         }
 
-        private void InsertToDatabase()
+        private bool InsertToDatabase()
         {
-            string name = user.Name;
-            string password = user.Password;
-
             try
             {
                 // =========================
@@ -230,57 +221,26 @@ namespace FingerPrint4
                     Constants.ResultCode.DP_SUCCESS)
                 {
                     MessageBox.Show("Failed create fingerprint template");
-                    return;
+                    return false;
                 }
 
                 Fmd fmd = fmdResult.Data;
 
-                string fingerprintXml = Fmd.SerializeXml(fmd);
-
-                using (SqlConnection con =
-                    new SqlConnection(connectionString))
-                {
-                    con.Open();
-                    // =========================
-                    // INSERT USER
-                    // =========================
-
-                    string insertSql =
-                        @"INSERT INTO Users
-                            (Name, FingerPrint, Password)
-                            VALUES
-                            (@Name, @FingerPrint, @Password)";
-
-                    SqlCommand insertCmd =
-                        new SqlCommand(insertSql, con);
-
-                    insertCmd.Parameters.AddWithValue(
-                        "@Name",
-                        name
-                    );
-
-                    insertCmd.Parameters.AddWithValue(
-                        "@FingerPrint",
-                        fingerprintXml
-                    );
-
-                    insertCmd.Parameters.AddWithValue(
-                        "@Password",
-                        DatabaseConnection.Encrypt(password)
-                    );
-
-                    insertCmd.ExecuteNonQuery();
-                }
+                user.Fmd = fmd;
+                userRepository.Add(user);
 
                 MessageBox.Show(
                     "Data saved successfully",
                     "Success",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
+
+                return true;
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
+                return false;
             }
         }
     }

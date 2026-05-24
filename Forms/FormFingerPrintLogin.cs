@@ -1,37 +1,32 @@
 ﻿using DPUruNet;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Data.SqlClient;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml.Linq;
 
 namespace FingerPrint4
 {
     public partial class FormFingerPrintLogin : Form
     {
-        private String connectionString;
         private ReaderCollection readers;
         private Reader currentReader;
         private CaptureResult captureResult;
         private Form parent;
+        private readonly UserRepository userRepository;
 
         public FormFingerPrintLogin()
         {
             InitializeComponent();
+            userRepository = new UserRepository();
         }
 
-        public FormFingerPrintLogin(String connectionString, ReaderCollection readers, Reader currentReader, CaptureResult captureResult, Form parent)
+        public FormFingerPrintLogin(ReaderCollection readers, Reader currentReader, CaptureResult captureResult, Form parent)
         {
             InitializeComponent();
-            this.connectionString = connectionString;
+            userRepository = new UserRepository();
             this.readers = readers;
             this.currentReader = currentReader;
             this.captureResult = captureResult;
@@ -151,56 +146,7 @@ namespace FingerPrint4
                         // LOAD ALL USERS
                         // =========================
 
-                        List<UserFingerPrint> users =
-                            new List<UserFingerPrint>();
-
-                        using (SqlConnection con =
-                            new SqlConnection(connectionString))
-                        {
-                            con.Open();
-
-                            string sql =
-                                "SELECT Name, Password, FingerPrint FROM Users";
-
-                            SqlCommand cmd =
-                                new SqlCommand(sql, con);
-
-                            SqlDataReader reader =
-                                cmd.ExecuteReader();
-
-                            while (reader.Read())
-                            {
-                                try
-                                {
-                                    string fingerprintXml =
-                                        reader["FingerPrint"]
-                                        .ToString();
-
-                                    Fmd dbFmd =
-                                        Fmd.DeserializeXml(
-                                            fingerprintXml
-                                        );
-
-                                    users.Add(
-                                        new UserFingerPrint
-                                        {
-                                            Name =
-                                                reader["Name"]
-                                                .ToString(),
-
-                                            Password =
-                                                reader["Password"]
-                                                .ToString(),
-
-                                            Fmd = dbFmd
-                                        });
-                                }
-                                catch
-                                {
-
-                                }
-                            }
-                        }
+                        List<UserFingerprint> users = userRepository.GetUsersWithFingerprints();
 
                         // =========================
                         // CHECK USER EXISTS
@@ -209,7 +155,7 @@ namespace FingerPrint4
                         if (users.Count == 0)
                         {
                             lblStatus.Text =
-                                "Your fingerprint is not registered";
+                                AppMessages.FingerprintNotRegistered;
 
                             if (parent != null)
                             {
@@ -252,7 +198,7 @@ namespace FingerPrint4
                             int matchedIndex =
                                 identifyResult.Indexes[0][0];
 
-                            UserFingerPrint user =
+                            UserFingerprint user =
                                 users[matchedIndex];
 
                             lblStatus.Text =
@@ -264,7 +210,7 @@ namespace FingerPrint4
                         else
                         {
                             lblStatus.Text =
-                                "Your fingerprint is not registered";
+                                AppMessages.FingerprintNotRegistered;
 
                             if (parent != null)
                             {

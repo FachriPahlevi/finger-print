@@ -3,37 +3,28 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Data.SqlClient;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml.Linq;
 
 namespace FingerPrint4
 {
-    public partial class FormLoginWithPassword : Form
+    public partial class FormLogin : Form
     {
-        private bool showPassword;
-        private Form parent;
-        private UserFingerPrint user;
-        private String connectionString;
+        private ReaderCollection readers;
+        private Reader currentReader;
+        private CaptureResult captureResult;
 
-        public FormLoginWithPassword(Form parent, UserFingerPrint user = null)
+        bool showPassword;
+        public FormLogin()
         {
             InitializeComponent();
 
             showPassword = false;
             setUI();
-            this.parent = parent;
-
-            if (user != null)
-            {
-                txtUsername1.Text = user.Name;
-                txtPassword.Text = DatabaseConnection.Decrypt(user.Password);
-            }
         }
 
         private void setUI()
@@ -90,8 +81,8 @@ namespace FingerPrint4
             panelTBPassword.Region = new Region(path4);
 
             // Icon Button
-            //Image resized = new Bitmap(global::FingerPrint4.Properties.Resources.fingerprint_04, new Size(45, 35));
-            //btnLogin1.Image = resized;
+            Image resized = new Bitmap(global::FingerPrint4.Properties.Resources.fingerprint_04, new Size(45, 35));
+            btnLogin1.Image = resized;
 
             Image resized2 = new Bitmap(global::FingerPrint4.Properties.Resources.eye_icon, new Size(25, 15));
             btnShowPassword.Image = resized2;
@@ -99,50 +90,8 @@ namespace FingerPrint4
 
         private void BtnLogin1_Click(object sender, EventArgs e)
         {
-            string name = txtUsername1.Text;
-            string password = txtPassword.Text;
-
-            using (SqlConnection con =
-                new SqlConnection(connectionString))
-            {
-                con.Open();
-
-                string sql =
-                    @"SELECT * FROM Users
-                    WHERE name=@Username
-                    AND password=@Password";
-
-                SqlCommand cmd =
-                    new SqlCommand(sql, con);
-
-                cmd.Parameters.AddWithValue(
-                    "@Username",
-                    name
-                );
-
-                cmd.Parameters.AddWithValue(
-                    "@Password",
-                    DatabaseConnection.Encrypt(password)
-                );
-
-                SqlDataReader reader =
-                    cmd.ExecuteReader();
-
-                if (reader.Read())
-                {
-                    FormDashboard frm =
-                        new FormDashboard();
-
-                    this.Hide();
-                    frm.ShowDialog();
-                }
-                else
-                {
-                    MessageBox.Show(
-                        "Login Failed", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information
-                    );
-                }
-            }
+            this.Hide();
+            new FormFingerPrintLogin(readers, currentReader, captureResult, this).ShowDialog();
         }
 
         private void btnShowPassword_Click(object sender, EventArgs e)
@@ -156,14 +105,34 @@ namespace FingerPrint4
             txtPassword.UseSystemPasswordChar = (!showPassword);
         }
 
-        private void FormLoginWithPassword_FormClosing(object sender, FormClosingEventArgs e)
+        private void FormLogin_Load(object sender, EventArgs e)
         {
-            if (parent!=null) parent.Close();
+            InitReader();
         }
 
-        private void FormLoginWithPassword_Load(object sender, EventArgs e)
+        private void InitReader()
         {
-            this.connectionString = DatabaseConnection.connectionString;
+            try
+            {
+                ReaderCollection readers = ReaderCollection.GetReaders();
+
+                if (readers.Count > 0)
+                {
+                    currentReader = readers[0];
+                    this.readers = readers;
+                }
+                else
+                {
+                    MessageBox.Show(AppMessages.FingerprintNotDetected, "Information",MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    this.Hide();
+                    new FormLoginWithPassword(this).ShowDialog();
+                    this.readers = readers;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
         }
     }
 }
