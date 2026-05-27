@@ -1,4 +1,4 @@
-﻿using DPUruNet;
+using DPUruNet;
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -103,7 +103,6 @@ namespace FingerPrint4
                     lblStatus.Text =
                         "Fingerprint successfully read";
 
-                    // TAMPILKAN GAMBAR FINGERPRINT
                     Bitmap bitmap =
                         CreateBitmap(
                             captureResult.Data.Views[0].RawImage,
@@ -111,7 +110,6 @@ namespace FingerPrint4
                             captureResult.Data.Views[0].Height
                         );
 
-                    //pictureFingerprint.Visible = true;
                     pictureFingerprint.Image = bitmap;
 
                     if (InsertToDatabase())
@@ -128,7 +126,6 @@ namespace FingerPrint4
             }));
         }
 
-        // METHOD KONVERSI BYTE[] KE BITMAP
         private Bitmap CreateBitmap(byte[] bytes, int width, int height)
         {
             Bitmap bmp = new Bitmap(
@@ -136,7 +133,6 @@ namespace FingerPrint4
                 height,
                 PixelFormat.Format8bppIndexed);
 
-            // grayscale palette
             ColorPalette palette = bmp.Palette;
 
             for (int i = 0; i < 256; i++)
@@ -154,7 +150,6 @@ namespace FingerPrint4
             IntPtr ptr = bmpData.Scan0;
             int stride = bmpData.Stride;
 
-            // copy per line
             for (int y = 0; y < height; y++)
             {
                 Marshal.Copy(
@@ -175,15 +170,9 @@ namespace FingerPrint4
             {
                 if (currentReader != null)
                 {
-                    // Hapus event
                     currentReader.On_Captured -= Reader_OnCaptured;
-
-                    // Cancel capture
                     currentReader.CancelCapture();
-
-                    // Dispose reader
                     currentReader.Dispose();
-
                     currentReader = null;
                 }
             }
@@ -207,10 +196,6 @@ namespace FingerPrint4
         {
             try
             {
-                // =========================
-                // CONVERT FINGERPRINT TO FMD
-                // =========================
-
                 DataResult<Fmd> fmdResult =
                     FeatureExtraction.CreateFmdFromFid(
                         captureResult.Data,

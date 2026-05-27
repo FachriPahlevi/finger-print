@@ -1,4 +1,4 @@
-﻿using DPUruNet;
+using DPUruNet;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -25,7 +25,6 @@ namespace FingerPrint4
 
         private void setUI()
         {
-            // Border Radius Panel
             GraphicsPath path = new GraphicsPath();
 
             int radius = 30;
@@ -39,7 +38,6 @@ namespace FingerPrint4
 
             cardPanel1.Region = new Region(path);
 
-            // Border Radius Button
             btnRegister1.FlatStyle = FlatStyle.Flat;
             btnRegister1.FlatAppearance.BorderSize = 0;
 
@@ -52,7 +50,6 @@ namespace FingerPrint4
 
             btnRegister1.Region = new Region(path2);
 
-            // Border Radius TextBox UserName
             GraphicsPath path3 = new GraphicsPath();
 
             radius = 20;
@@ -65,7 +62,6 @@ namespace FingerPrint4
 
             panelTBUsername.Region = new Region(path3);
 
-            // Border Radius TextBox Password
             GraphicsPath path4 = new GraphicsPath();
             path4.StartFigure();
             path4.AddArc(new Rectangle(0, 0, radius, radius), 180, 90);
@@ -76,7 +72,6 @@ namespace FingerPrint4
 
             panelTBPassword.Region = new Region(path4);
 
-            // Icon Button
             Image resized = new Bitmap(global::FingerPrint4.Properties.Resources.fingerprint_04, new Size(45, 35));
             btnRegister1.Image = resized;
 
